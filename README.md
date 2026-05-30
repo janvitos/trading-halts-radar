@@ -31,6 +31,34 @@ Requirements:
 - Node.js 20 or newer
 - npm
 
+Recommended local launch:
+
+On Linux/macOS:
+
+```bash
+./start.sh
+```
+
+On Windows:
+
+```bat
+start.bat
+```
+
+The launcher scripts install dependencies on first run, rebuild the dashboard, and start the production server. On later runs, dependency installation is skipped unless `package.json` or `package-lock.json` changed.
+
+Open:
+
+```text
+http://localhost:8787
+```
+
+The port can be changed with the `PORT` environment variable.
+
+## Development
+
+For Vite development mode:
+
 ```bash
 npm install
 npm run dev
@@ -47,6 +75,8 @@ The backend runs on:
 ```text
 http://localhost:8787
 ```
+
+In development mode, opening the backend URL directly shows only the backend server. Use the Vite URL for the dashboard.
 
 ## Production Build
 
