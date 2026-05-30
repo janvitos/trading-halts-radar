@@ -1,0 +1,31 @@
+{
+  "name": "trading-halts-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Local real-time trading halt dashboard with volatility halt predictions and browser alerts.",
+  "scripts": {
+    "dev": "concurrently \"node server/index.js\" \"vite --host 0.0.0.0\"",
+    "build": "tsc && vite build",
+    "start": "NODE_ENV=production node server/index.js"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.0.2",
+    "concurrently": "^10.0.0",
+    "express": "^5.2.1",
+    "fast-xml-parser": "^5.8.0",
+    "luxon": "^3.7.2",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
