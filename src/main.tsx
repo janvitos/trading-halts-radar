@@ -407,7 +407,7 @@ function HaltRow({ record, state, now, onToggle }: { record: HaltRecord; state: 
       <td><CountdownPill record={record} now={now} /></td>
       <td><span className={`status status-${record.status}`}>{statusLabel(record)}</span></td>
       <td>
-        <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label={record.watched ? `Disable ${record.symbol}` : `Alert ${record.symbol}`} />
+        <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label={record.watched ? 'Disable Alert' : 'Enable Alert'} />
       </td>
     </tr>
   );
@@ -433,7 +433,7 @@ function HaltCard({ record, state, now, onToggle }: { record: HaltRecord; state:
         <Detail label="Quote Resume" value={record.quoteResumeAt ? `${formatIso(record.quoteResumeAt)} ET` : '-'} />
         <Detail label="Trade Resume" value={record.tradeResumeAt ? `${formatIso(record.tradeResumeAt)} ET` : 'pending'} />
       </div>
-      <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label={record.watched ? `Alerts on ${record.symbol}` : `Alert ${record.symbol}`} />
+      <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label={record.watched ? 'Disable Alert' : 'Enable Alert'} />
     </article>
   );
 }
@@ -517,6 +517,11 @@ function App() {
               <p className="eyebrow">Halts</p>
               <h2>{records.length} records</h2>
             </div>
+            <button className={`mobile-settings-button toolbar-settings-button ${mobileSettingsOpen ? 'open' : ''}`} type="button" aria-label={mobileSettingsOpen ? 'Close alert settings' : 'Open alert settings'} onClick={() => setMobileSettingsOpen((open) => !open)}>
+              <span />
+              <span />
+              <span />
+            </button>
           </div>
           <div className="toolbar-controls">
             <input value={query} onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))} placeholder="Search symbol, company, code" />
