@@ -18,8 +18,14 @@ if ! node -e "process.exit(Number(process.versions.node.split('.')[0]) >= 20 ? 0
   exit 1
 fi
 
-printf '%s\n' "Installing or updating dependencies..."
-npm install --no-bin-links
+deps_marker="node_modules/.deps-installed"
+if [ ! -d node_modules ] || [ ! -f "$deps_marker" ] || [ package.json -nt "$deps_marker" ] || [ package-lock.json -nt "$deps_marker" ]; then
+  printf '%s\n' "Installing or updating dependencies..."
+  npm install --no-bin-links
+  : > "$deps_marker"
+else
+  printf '%s\n' "Dependencies are up to date."
+fi
 
 printf '%s\n' "Building the dashboard..."
 node ./node_modules/typescript/bin/tsc

@@ -22,9 +22,22 @@ if errorlevel 1 (
   exit /b 1
 )
 
-echo Installing or updating dependencies...
-call npm install --no-bin-links
-if errorlevel 1 exit /b %errorlevel%
+set INSTALL_DEPS=0
+if not exist "node_modules" set INSTALL_DEPS=1
+if not exist "node_modules\.deps-installed" set INSTALL_DEPS=1
+if exist "node_modules\.deps-installed" (
+  for %%p in ("package.json") do for %%m in ("node_modules\.deps-installed") do if %%~tp GTR %%~tm set INSTALL_DEPS=1
+  for %%l in ("package-lock.json") do for %%m in ("node_modules\.deps-installed") do if %%~tl GTR %%~tm set INSTALL_DEPS=1
+)
+
+if "%INSTALL_DEPS%"=="1" (
+  echo Installing or updating dependencies...
+  call npm install --no-bin-links
+  if errorlevel 1 exit /b %errorlevel%
+  type nul > "node_modules\.deps-installed"
+) else (
+  echo Dependencies are up to date.
+)
 
 echo Building the dashboard...
 node ".\node_modules\typescript\bin\tsc"
