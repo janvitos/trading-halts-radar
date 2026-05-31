@@ -480,7 +480,7 @@ function App() {
           <div className="panel-head toolbar-head">
             <div>
               <p className="eyebrow">Trading Halts Radar</p>
-              <h2>{records.length} records</h2>
+              <h2>{records.length} {records.length === 1 ? 'halt' : 'halts'}</h2>
             </div>
             <div className="toolbar-actions">
               {feedIssue && <span className={`pill ${feedIssue.tone}`}>{feedIssue.label}</span>}
