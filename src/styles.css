@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
-  --bg: #070a12;
-  --bg-2: #0b1020;
+  --bg: #080d1c;
+  --bg-2: #0d1830;
   --panel: rgba(20, 30, 52, 0.94);
   --panel-solid: #141e34;
   --panel-soft: #1a2742;
@@ -37,12 +37,12 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    linear-gradient(158deg, rgba(2, 4, 10, 0.42) 0%, transparent 42%, rgba(4, 7, 16, 0.36) 100%),
-    linear-gradient(145deg, rgba(124, 92, 255, 0.14) 0%, rgba(124, 92, 255, 0.07) 22%, transparent 52%),
-    linear-gradient(32deg, transparent 34%, rgba(34, 211, 238, 0.075) 58%, transparent 86%),
-    linear-gradient(215deg, rgba(34, 211, 238, 0.08) 0%, rgba(34, 211, 238, 0.035) 26%, transparent 56%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.018) 0%, transparent 46%),
-    linear-gradient(145deg, #050711 0%, #080d18 48%, var(--bg-2) 100%);
+    linear-gradient(158deg, rgba(2, 4, 10, 0.36) 0%, transparent 42%, rgba(4, 7, 16, 0.3) 100%),
+    linear-gradient(145deg, rgba(124, 92, 255, 0.17) 0%, rgba(124, 92, 255, 0.09) 22%, transparent 52%),
+    linear-gradient(32deg, transparent 34%, rgba(34, 211, 238, 0.095) 58%, transparent 86%),
+    linear-gradient(215deg, rgba(34, 211, 238, 0.105) 0%, rgba(34, 211, 238, 0.045) 26%, transparent 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.024) 0%, transparent 46%),
+    linear-gradient(145deg, #060b19 0%, #091123 48%, var(--bg-2) 100%);
   color: var(--text);
 }
 
@@ -51,9 +51,9 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    linear-gradient(118deg, transparent 0%, rgba(124, 92, 255, 0.055) 34%, transparent 58%),
-    linear-gradient(298deg, transparent 18%, rgba(34, 211, 238, 0.04) 48%, transparent 76%),
-    radial-gradient(ellipse at center, transparent 0%, rgba(2, 4, 10, 0.2) 66%, rgba(2, 4, 10, 0.54) 100%);
+    linear-gradient(118deg, transparent 0%, rgba(124, 92, 255, 0.065) 34%, transparent 58%),
+    linear-gradient(298deg, transparent 18%, rgba(34, 211, 238, 0.05) 48%, transparent 76%),
+    radial-gradient(ellipse at center, transparent 0%, rgba(2, 4, 10, 0.16) 66%, rgba(2, 4, 10, 0.48) 100%);
   pointer-events: none;
   z-index: 0;
 }
