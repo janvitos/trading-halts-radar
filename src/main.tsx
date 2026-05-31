@@ -507,9 +507,7 @@ function App() {
   return (
     <>
       <main className="app-shell">
-        <section className="top-grid">
-          <FeedStatusCard state={appState} connected={connected} now={now} mobileSettingsOpen={mobileSettingsOpen} onToggleSettings={() => setMobileSettingsOpen((open) => !open)} />
-        </section>
+        <FeedStatusCard state={appState} connected={connected} now={now} mobileSettingsOpen={mobileSettingsOpen} onToggleSettings={() => setMobileSettingsOpen((open) => !open)} />
 
         <section className="toolbar panel">
           <div className="panel-head toolbar-head">
