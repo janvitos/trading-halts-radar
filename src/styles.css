@@ -32,14 +32,42 @@
 * { box-sizing: border-box; }
 
 body {
+  position: relative;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(124, 92, 255, 0.22), transparent 34rem),
-    radial-gradient(circle at 85% 8%, rgba(34, 211, 238, 0.16), transparent 30rem),
-    linear-gradient(135deg, var(--bg), var(--bg-2));
+    linear-gradient(158deg, rgba(2, 4, 10, 0.42) 0%, transparent 42%, rgba(4, 7, 16, 0.36) 100%),
+    linear-gradient(145deg, rgba(124, 92, 255, 0.14) 0%, rgba(124, 92, 255, 0.07) 22%, transparent 52%),
+    linear-gradient(32deg, transparent 34%, rgba(34, 211, 238, 0.075) 58%, transparent 86%),
+    linear-gradient(215deg, rgba(34, 211, 238, 0.08) 0%, rgba(34, 211, 238, 0.035) 26%, transparent 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018) 0%, transparent 46%),
+    linear-gradient(145deg, #050711 0%, #080d18 48%, var(--bg-2) 100%);
+  background-attachment: fixed;
   color: var(--text);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(118deg, transparent 0%, rgba(124, 92, 255, 0.055) 34%, transparent 58%),
+    linear-gradient(298deg, transparent 18%, rgba(34, 211, 238, 0.04) 48%, transparent 76%),
+    radial-gradient(ellipse at center, transparent 0%, rgba(2, 4, 10, 0.2) 66%, rgba(2, 4, 10, 0.54) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(238, 243, 255, 0.12) 0 1px, transparent 1px);
+  background-size: 4px 4px;
+  opacity: 0.07;
+  pointer-events: none;
+  z-index: 0;
 }
 
 button, input { font: inherit; }
@@ -49,6 +77,7 @@ button:disabled { cursor: not-allowed; opacity: 0.7; }
 #root {
   position: relative;
   min-height: 100dvh;
+  z-index: 1;
 }
 
 .app-shell {
