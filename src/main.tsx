@@ -523,8 +523,8 @@ function App() {
           </div>
           <div className="toolbar-controls">
             <input value={query} onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))} placeholder="Search symbol, company, code" />
-            <Toggle checked={volOnly} onChange={(checked) => setFilters((current) => ({ ...current, volOnly: checked }))} label="Volatility only" />
-            <Toggle checked={activeOnly} onChange={(checked) => setFilters((current) => ({ ...current, activeOnly: checked }))} label="Active only" />
+            <Toggle checked={volOnly} onChange={(checked) => setFilters((current) => ({ ...current, volOnly: checked }))} label="Volatility" />
+            <Toggle checked={activeOnly} onChange={(checked) => setFilters((current) => ({ ...current, activeOnly: checked }))} label="Active" />
           </div>
         </section>
 
