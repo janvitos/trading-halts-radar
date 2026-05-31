@@ -267,41 +267,6 @@ function playBeep() {
   }
 }
 
-function FeedStatusCard({ state, connected, now, mobileSettingsOpen, onToggleSettings }: { state: AppState; connected: boolean; now: number; mobileSettingsOpen: boolean; onToggleSettings: () => void }) {
-  const nextPoll = state.feed.nextPollAt ? Math.max(0, Math.ceil((Date.parse(state.feed.nextPollAt) - now) / 1_000)) : null;
-  return (
-    <section className="panel feed-card">
-      <div className="panel-head">
-        <div>
-          <p className="eyebrow">Live Monitor</p>
-          <h2>Trading Halts Radar</h2>
-        </div>
-        <button className={`mobile-settings-button ${mobileSettingsOpen ? 'open' : ''}`} type="button" aria-label={mobileSettingsOpen ? 'Close alert settings' : 'Open alert settings'} onClick={onToggleSettings}>
-          <span />
-          <span />
-          <span />
-        </button>
-      </div>
-      <div className="feed-grid">
-        <Metric label="Status" value={state.feed.status} tone={state.feed.status === 'error' ? 'danger' : connected ? 'success' : 'warning'} />
-        <Metric label="Last success" value={formatIso(state.feed.lastSuccessAt, 'Waiting')} />
-        <Metric label="Next poll" value={nextPoll === null ? '-' : `${nextPoll}s`} />
-        <Metric label="Halts" value={String(state.feed.itemCount || 0)} />
-      </div>
-      {state.feed.lastError && <p className="error-line">{state.feed.lastError}</p>}
-    </section>
-  );
-}
-
-function Metric({ label, value, tone }: { label: string; value: string; tone?: 'success' | 'warning' | 'danger' }) {
-  return (
-    <div className={`metric ${tone || ''}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
 function SettingsPanel({ state, setSettings }: { state: AppState; setSettings: React.Dispatch<React.SetStateAction<Settings>> }) {
   const [permission, setPermission] = useState(() => ('Notification' in window ? Notification.permission : 'unsupported'));
 
@@ -504,28 +469,34 @@ function App() {
     return <main className="loading-screen"><div className="loader" /><h1>Connecting to halt feed...</h1></main>;
   }
 
+  const feedIssue = appState.feed.status === 'error' || appState.feed.lastError
+    ? { label: 'Feed error', tone: 'danger' }
+    : connected ? null : { label: 'Connecting', tone: 'warning' };
+
   return (
     <>
       <main className="app-shell">
-        <FeedStatusCard state={appState} connected={connected} now={now} mobileSettingsOpen={mobileSettingsOpen} onToggleSettings={() => setMobileSettingsOpen((open) => !open)} />
-
         <section className="toolbar panel">
           <div className="panel-head toolbar-head">
             <div>
-              <p className="eyebrow">Halts</p>
+              <p className="eyebrow">Trading Halts Radar</p>
               <h2>{records.length} records</h2>
             </div>
-            <button className={`mobile-settings-button toolbar-settings-button ${mobileSettingsOpen ? 'open' : ''}`} type="button" aria-label={mobileSettingsOpen ? 'Close alert settings' : 'Open alert settings'} onClick={() => setMobileSettingsOpen((open) => !open)}>
-              <span />
-              <span />
-              <span />
-            </button>
+            <div className="toolbar-actions">
+              {feedIssue && <span className={`pill ${feedIssue.tone}`}>{feedIssue.label}</span>}
+              <button className={`mobile-settings-button toolbar-settings-button ${mobileSettingsOpen ? 'open' : ''}`} type="button" aria-label={mobileSettingsOpen ? 'Close alert settings' : 'Open alert settings'} onClick={() => setMobileSettingsOpen((open) => !open)}>
+                <span />
+                <span />
+                <span />
+              </button>
+            </div>
           </div>
           <div className="toolbar-controls">
             <input value={query} onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))} placeholder="Search symbol, company, code" />
             <Toggle checked={volOnly} onChange={(checked) => setFilters((current) => ({ ...current, volOnly: checked }))} label="Volatility" />
             <Toggle checked={activeOnly} onChange={(checked) => setFilters((current) => ({ ...current, activeOnly: checked }))} label="Active" />
           </div>
+          {appState.feed.lastError && <p className="error-line">{appState.feed.lastError}</p>}
         </section>
 
         <HaltTable records={records} state={appState} setWatchedSymbols={setWatchedSymbols} now={now} />
