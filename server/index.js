@@ -11,7 +11,7 @@ const rootDir = path.resolve(__dirname, '..');
 const dataDir = path.join(rootDir, 'data');
 const storePath = path.join(dataDir, 'store.json');
 
-const PORT = Number(process.env.PORT || 8787);
+const PORT = Number(process.env.THR_PORT || 8787);
 const RSS_URL = process.env.HALT_RSS_URL || 'https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts';
 const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS || 60_000);
 const ET_ZONE = 'America/New_York';

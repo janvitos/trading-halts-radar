@@ -32,5 +32,5 @@ node ./node_modules/typescript/bin/tsc
 node ./node_modules/vite/bin/vite.js build
 
 printf '%s\n' "Starting Trading Halts Radar..."
-printf '%s\n' "Open http://localhost:${PORT:-8787}/ in your browser."
+printf '%s\n' "Open http://localhost:${THR_PORT:-8787}/ in your browser."
 NODE_ENV=production node server/index.js

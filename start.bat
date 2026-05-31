@@ -46,7 +46,7 @@ node ".\node_modules\vite\bin\vite.js" build
 if errorlevel 1 exit /b %errorlevel%
 
 echo Starting Trading Halts Radar...
-if not defined PORT set PORT=8787
-echo Open http://localhost:%PORT%/ in your browser.
+if not defined THR_PORT set THR_PORT=8787
+echo Open http://localhost:%THR_PORT%/ in your browser.
 set NODE_ENV=production
 node ".\server\index.js"

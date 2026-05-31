@@ -53,7 +53,7 @@ Open:
 http://localhost:8787
 ```
 
-The port can be changed with the `PORT` environment variable.
+The port can be changed with the `THR_PORT` environment variable.
 
 ## Development
 
@@ -97,7 +97,7 @@ In production mode, the Express server serves the compiled Vite app from `dist/`
 
 Environment variables:
 
-- `PORT`: backend port, default `8787`.
+- `THR_PORT`: backend port, default `8787`.
 - `HALT_RSS_URL`: RSS feed URL, default NASDAQ Trader trade halt RSS.
 - `POLL_INTERVAL_MS`: polling interval, default `60000`.
 
