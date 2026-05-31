@@ -617,3 +617,17 @@ input:focus, button:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
+
+@-moz-document url-prefix() {
+  body {
+    background-attachment: scroll;
+  }
+
+  body::after {
+    display: none;
+  }
+
+  .panel, .mobile-settings-button, .settings-shell.mobile-open .settings-backdrop {
+    backdrop-filter: none;
+  }
+}
