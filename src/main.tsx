@@ -475,8 +475,8 @@ function HaltCodeKey() {
     <details className="panel code-key" open>
       <summary>
         <span>
-          <span className="eyebrow">Halt Code Key</span>
-          <strong>NASDAQ reason-code meanings</strong>
+          <span className="eyebrow">Trading Halt Codes</span>
+          <strong>NASDAQ trading halt reason codes</strong>
         </span>
       </summary>
       <div className="code-key-grid">
