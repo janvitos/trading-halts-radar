@@ -30,6 +30,7 @@ const ET_PARTS_FORMATTER = new Intl.DateTimeFormat('en-US', {
 const FILTERS_STORAGE_KEY = 'trading-halts-dashboard:filters';
 const SETTINGS_STORAGE_KEY = 'trading-halts-dashboard:settings';
 const SYMBOL_ALERTS_STORAGE_KEY = 'trading-halts-dashboard:symbol-alerts';
+const CODE_KEY_OPEN_STORAGE_KEY = 'trading-halts-dashboard:code-key-open';
 const LEGACY_WATCHLIST_STORAGE_KEY = 'trading-halts-dashboard:watchlist';
 
 const DEFAULT_CLIENT_SETTINGS: Settings = {
@@ -149,6 +150,10 @@ function readStoredSymbolAlerts(): Record<string, boolean> {
   }
 }
 
+function readStoredCodeKeyOpen() {
+  return localStorage.getItem(CODE_KEY_OPEN_STORAGE_KEY) !== 'false';
+}
+
 function useNow() {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -201,6 +206,10 @@ function isExpiredVolatilityHalt(record: HaltRecord, now: number) {
   if (!halt || !current) return false;
   if (current.dateKey > halt.dateKey) return true;
   return current.dateKey === halt.dateKey && current.timeKey >= 1600;
+}
+
+function isActiveHalt(record: HaltRecord) {
+  return record.status !== 'resumed' && record.status !== 'ended';
 }
 
 function targetFor(record: HaltRecord) {
@@ -442,6 +451,8 @@ function HaltTable({ records, state, setWatchedSymbols, now }: { records: HaltRe
 }
 
 function CountdownPill({ record, now }: { record: HaltRecord; now: number }) {
+  if (record.status === 'resumed') return <span className="pill success">Complete</span>;
+  if (record.status === 'ended') return <span className="pill muted">Ended</span>;
   const target = targetFor(record);
   if (!target) return <span className="pill muted">No target</span>;
   const seconds = Math.ceil((Date.parse(target) - now) / 1_000);
@@ -462,7 +473,7 @@ function HaltRow({ record, state, now, onToggle }: { record: HaltRecord; state: 
       <td><CountdownPill record={record} now={now} /></td>
       <td><span className={`status status-${record.status}`}>{statusLabel(record)}</span></td>
       <td>
-        <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label={record.watched ? 'Disable Alert' : 'Enable Alert'} />
+        <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label={record.watched ? 'Disable Alert' : 'Alert and Watch'} />
       </td>
     </tr>
   );
@@ -488,7 +499,7 @@ function HaltCard({ record, state, now, onToggle }: { record: HaltRecord; state:
         <Detail label="Quote Resume" value={record.quoteResumeAt ? `${formatIso(record.quoteResumeAt)} ET` : '-'} />
         <Detail label="Trade Resume" value={record.tradeResumeAt ? `${formatIso(record.tradeResumeAt)} ET` : 'pending'} />
       </div>
-      <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label={record.watched ? 'Disable Alert' : 'Enable Alert'} />
+      <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label={record.watched ? 'Disable Alert' : 'Alert and Watch'} />
     </article>
   );
 }
@@ -501,9 +512,9 @@ function ReasonBadge({ record }: { record: HaltRecord }) {
   );
 }
 
-function HaltCodeKey() {
+function HaltCodeKey({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
-    <details className="panel code-key" open>
+    <details className="panel code-key" open={open} onToggle={(event) => onOpenChange(event.currentTarget.open)}>
       <summary>
         <span>
           <span className="eyebrow">Trading Halt Codes</span>
@@ -548,6 +559,7 @@ function App() {
   const [filters, setFilters] = useState<StoredFilters>(() => readStoredFilters());
   const [settings, setSettings] = useState<Settings>(() => readStoredSettings());
   const [watchedSymbols, setWatchedSymbols] = useState<Record<string, boolean>>(() => readStoredSymbolAlerts());
+  const [codeKeyOpen, setCodeKeyOpen] = useState(() => readStoredCodeKeyOpen());
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const { query, volOnly, activeOnly } = filters;
 
@@ -572,14 +584,39 @@ function App() {
     localStorage.removeItem(LEGACY_WATCHLIST_STORAGE_KEY);
   }, [watchedSymbols]);
 
+  useEffect(() => {
+    localStorage.setItem(CODE_KEY_OPEN_STORAGE_KEY, String(codeKeyOpen));
+  }, [codeKeyOpen]);
+
   const records = useMemo(() => {
     if (!appState) return [];
     const q = query.trim().toUpperCase();
-    return appState.halts.filter((record) => {
-      if (isExpiredVolatilityHalt(record, now)) return false;
+    const current = appState.halts.filter((record) => {
       if (volOnly && !record.isVolatility) return false;
-      if (activeOnly && record.status === 'ended') return false;
-      if (activeOnly && record.status === 'resumed' && (!record.watched || record.isVolatility)) return false;
+      return !isExpiredVolatilityHalt(record, now);
+    });
+    const watchedSymbolsWithActiveHalts = new Set<string>();
+    const latestWatchedRecordBySymbol = new Map<string, HaltRecord>();
+
+    for (const record of current) {
+      if (!record.watched) continue;
+      if (isActiveHalt(record)) watchedSymbolsWithActiveHalts.add(record.symbol);
+
+      const latest = latestWatchedRecordBySymbol.get(record.symbol);
+      if (!latest || Date.parse(record.haltAt || '0') > Date.parse(latest.haltAt || '0')) {
+        latestWatchedRecordBySymbol.set(record.symbol, record);
+      }
+    }
+
+    const watchedFallbackIds = new Set(
+      [...latestWatchedRecordBySymbol.values()]
+        .filter((record) => !watchedSymbolsWithActiveHalts.has(record.symbol))
+        .map((record) => record.id)
+    );
+
+    return current.filter((record) => {
+      if (activeOnly && record.status === 'ended' && !watchedFallbackIds.has(record.id)) return false;
+      if (activeOnly && !isActiveHalt(record) && !watchedFallbackIds.has(record.id)) return false;
       if (!q) return true;
       return record.symbol.includes(q) || record.issueName.toUpperCase().includes(q) || record.reasonCode.includes(q);
     });
@@ -620,7 +657,7 @@ function App() {
         </section>
 
         <HaltTable records={records} state={appState} setWatchedSymbols={setWatchedSymbols} now={now} />
-        <HaltCodeKey />
+        <HaltCodeKey open={codeKeyOpen} onOpenChange={setCodeKeyOpen} />
       </main>
 
       <div className={`settings-shell ${mobileSettingsOpen ? 'mobile-open' : ''}`}>
