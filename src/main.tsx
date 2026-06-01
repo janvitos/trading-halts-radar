@@ -17,6 +17,16 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
   day: '2-digit'
 });
 
+const ET_PARTS_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23'
+});
+
 const FILTERS_STORAGE_KEY = 'trading-halts-dashboard:filters';
 const SETTINGS_STORAGE_KEY = 'trading-halts-dashboard:settings';
 const SYMBOL_ALERTS_STORAGE_KEY = 'trading-halts-dashboard:symbol-alerts';
@@ -28,7 +38,7 @@ const DEFAULT_CLIENT_SETTINGS: Settings = {
   alertOnResumption: true,
   browserNotifications: true,
   soundAlerts: false,
-  resumptionLeadTimesSec: [120, 60, 30, 10],
+  resumptionLeadTimesSec: [60, 30, 10],
   predictionWindowsMin: [5, 10, 20]
 };
 
@@ -116,7 +126,7 @@ function readStoredSettings(): Settings {
     return {
       ...DEFAULT_CLIENT_SETTINGS,
       ...parsed,
-      resumptionLeadTimesSec: Array.isArray(parsed.resumptionLeadTimesSec) ? parsed.resumptionLeadTimesSec : DEFAULT_CLIENT_SETTINGS.resumptionLeadTimesSec,
+      resumptionLeadTimesSec: DEFAULT_CLIENT_SETTINGS.resumptionLeadTimesSec,
       predictionWindowsMin: Array.isArray(parsed.predictionWindowsMin) ? parsed.predictionWindowsMin : DEFAULT_CLIENT_SETTINGS.predictionWindowsMin
     };
   } catch {
@@ -174,6 +184,25 @@ function formatSeconds(seconds: number) {
   return `${sign}${minutes}:${String(secs).padStart(2, '0')}`;
 }
 
+function etParts(value: string | number) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const parts = Object.fromEntries(ET_PARTS_FORMATTER.formatToParts(date).map((part) => [part.type, part.value]));
+  return {
+    dateKey: Number(`${parts.year}${parts.month}${parts.day}`),
+    timeKey: Number(`${parts.hour}${parts.minute}`)
+  };
+}
+
+function isExpiredVolatilityHalt(record: HaltRecord, now: number) {
+  if (!record.isVolatility || !record.haltAt) return false;
+  const halt = etParts(record.haltAt);
+  const current = etParts(now);
+  if (!halt || !current) return false;
+  if (current.dateKey > halt.dateKey) return true;
+  return current.dateKey === halt.dateKey && current.timeKey >= 1600;
+}
+
 function targetFor(record: HaltRecord) {
   return record.tradeResumeAt || record.prediction.targetAt;
 }
@@ -192,6 +221,8 @@ function statusLabel(record: HaltRecord) {
       return 'Prediction extended';
     case 'awaiting_official':
       return 'Awaiting official';
+    case 'ended':
+      return 'Ended';
     case 'resumed':
       return 'Resumed';
     default:
@@ -545,12 +576,14 @@ function App() {
     if (!appState) return [];
     const q = query.trim().toUpperCase();
     return appState.halts.filter((record) => {
+      if (isExpiredVolatilityHalt(record, now)) return false;
       if (volOnly && !record.isVolatility) return false;
-      if (activeOnly && record.status === 'resumed') return false;
+      if (activeOnly && record.status === 'ended') return false;
+      if (activeOnly && record.status === 'resumed' && (!record.watched || record.isVolatility)) return false;
       if (!q) return true;
       return record.symbol.includes(q) || record.issueName.toUpperCase().includes(q) || record.reasonCode.includes(q);
     });
-  }, [appState, query, volOnly, activeOnly]);
+  }, [appState, query, volOnly, activeOnly, now]);
 
   if (!appState) {
     return <main className="loading-screen"><div className="loader" /><h1>Connecting to halt feed...</h1></main>;

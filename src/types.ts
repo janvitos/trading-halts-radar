@@ -6,7 +6,7 @@ export type Prediction = {
   status: 'official' | 'none' | 'predicted' | 'extended' | 'awaiting_official';
 };
 
-export type HaltStatus = 'halted' | 'official_resume_scheduled' | 'prediction_extended' | 'awaiting_official' | 'resumed';
+export type HaltStatus = 'halted' | 'official_resume_scheduled' | 'prediction_extended' | 'awaiting_official' | 'ended' | 'resumed';
 
 export type HaltRecord = {
   id: string;
@@ -27,6 +27,8 @@ export type HaltRecord = {
   isVolatility: boolean;
   firstSeenAt: string;
   lastSeenAt: string;
+  endedAt?: string;
+  endedReason?: string;
   prediction: Prediction;
   status: HaltStatus;
   watched: boolean;

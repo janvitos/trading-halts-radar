@@ -23,7 +23,7 @@ const defaultSettings = {
   alertOnResumption: true,
   browserNotifications: true,
   soundAlerts: false,
-  resumptionLeadTimesSec: [120, 60, 30, 10],
+  resumptionLeadTimesSec: [60, 30, 10],
   predictionWindowsMin: [5, 10, 20]
 };
 
@@ -123,7 +123,7 @@ function normalizeItem(item) {
 }
 
 function predictionFor(record, nowMs = Date.now()) {
-  if (!record.isVolatility || !record.haltAt || record.tradeResumeAt) {
+  if (!record.isVolatility || !record.haltAt || record.tradeResumeAt || record.endedAt) {
     return { targetAt: null, stageMin: null, status: record.tradeResumeAt ? 'official' : 'none' };
   }
 
@@ -146,6 +146,7 @@ function predictionFor(record, nowMs = Date.now()) {
 function statusFor(record, nowMs = Date.now()) {
   if (record.tradeResumeAt && nowMs >= Date.parse(record.tradeResumeAt)) return 'resumed';
   if (record.tradeResumeAt) return 'official_resume_scheduled';
+  if (record.endedAt) return 'ended';
   const prediction = predictionFor(record, nowMs);
   if (prediction.status === 'awaiting_official') return 'awaiting_official';
   if (prediction.status === 'extended') return 'prediction_extended';
@@ -207,6 +208,52 @@ function mergeHaltData(existing, record, seenAt) {
   return merged;
 }
 
+function clearEndedState(record) {
+  if (!record.endedAt) return record;
+  const { endedAt, endedReason, ...activeRecord } = record;
+  return activeRecord;
+}
+
+function isUnresolvedVolatility(record) {
+  return record.isVolatility && record.haltAt && !record.tradeResumeAt && !record.endedAt;
+}
+
+function reconcileEndedVolatilityHalts(records, seenAt) {
+  let changed = false;
+  const currentIds = new Set(records.map((record) => record.id));
+  const latestVolatilityBySymbol = new Map();
+
+  for (const record of records) {
+    if (!record.isVolatility || !record.haltAt) continue;
+    const haltMs = Date.parse(record.haltAt);
+    if (!Number.isFinite(haltMs)) continue;
+    latestVolatilityBySymbol.set(record.symbol, Math.max(latestVolatilityBySymbol.get(record.symbol) || 0, haltMs));
+  }
+
+  for (const [id, record] of Object.entries(store.halts)) {
+    const haltMs = Date.parse(record.haltAt);
+    const latestSymbolHaltMs = latestVolatilityBySymbol.get(record.symbol) || 0;
+    const superseded = Number.isFinite(haltMs) && latestSymbolHaltMs > haltMs;
+
+    if (record.endedAt) {
+      if (currentIds.has(id) && !record.tradeResumeAt && !superseded) {
+        store.halts[id] = clearEndedState(record);
+        changed = true;
+      }
+      continue;
+    }
+
+    if (!isUnresolvedVolatility(record)) continue;
+    const endedReason = superseded ? 'superseded' : currentIds.has(id) ? '' : 'missing_from_feed';
+    if (!endedReason) continue;
+
+    store.halts[id] = { ...record, endedAt: seenAt, endedReason, lastSeenAt: seenAt };
+    changed = true;
+  }
+
+  return changed;
+}
+
 function normalizeStoredHalts(halts) {
   const normalized = {};
   const seenAt = new Date().toISOString();
@@ -238,7 +285,8 @@ function mergeRecords(records) {
       continue;
     }
 
-    const merged = mergeHaltData(existing, record, seenAt);
+    const mergedData = mergeHaltData(existing, record, seenAt);
+    const merged = record.tradeResumeAt ? clearEndedState(mergedData) : mergedData;
     if (JSON.stringify(existing) !== JSON.stringify(merged)) {
       store.halts[record.id] = merged;
       changed = true;
@@ -247,7 +295,7 @@ function mergeRecords(records) {
     }
   }
 
-  return changed;
+  return reconcileEndedVolatilityHalts(records, seenAt) || changed;
 }
 
 async function pollFeed() {
