@@ -71,7 +71,7 @@ function parseEt(dateText, timeText) {
 }
 
 function haltId(record) {
-  return [record.symbol, record.haltDate, record.haltTime, record.reasonCode].join('|');
+  return [record.symbol, record.haltDate, record.haltTime].join('|');
 }
 
 function reasonLabel(code) {
@@ -179,7 +179,7 @@ async function loadStore() {
     const parsed = JSON.parse(raw);
     store = {
       ...store,
-      halts: parsed.halts || {},
+      halts: normalizeStoredHalts(parsed.halts),
       feed: { ...store.feed, ...(parsed.feed || {}), status: 'starting', source: RSS_URL }
     };
   } catch (error) {
@@ -199,6 +199,28 @@ function scheduleSave() {
   }, 150);
 }
 
+function mergeHaltData(existing, record, seenAt) {
+  const merged = { ...existing, ...record, id: haltId(record), firstSeenAt: existing.firstSeenAt || seenAt, lastSeenAt: seenAt };
+  for (const field of ['resumptionDate', 'resumptionQuoteTime', 'resumptionTradeTime', 'quoteResumeAt', 'tradeResumeAt']) {
+    merged[field] = record[field] || existing[field];
+  }
+  return merged;
+}
+
+function normalizeStoredHalts(halts) {
+  const normalized = {};
+  const seenAt = new Date().toISOString();
+
+  for (const record of Object.values(halts || {})) {
+    const id = haltId(record);
+    const normalizedRecord = { ...record, id };
+    const existing = normalized[id];
+    normalized[id] = existing ? mergeHaltData(existing, normalizedRecord, existing.lastSeenAt || seenAt) : normalizedRecord;
+  }
+
+  return normalized;
+}
+
 function broadcast() {
   const payload = `data: ${JSON.stringify(publicState())}\n\n`;
   for (const response of clients) response.write(payload);
@@ -216,7 +238,7 @@ function mergeRecords(records) {
       continue;
     }
 
-    const merged = { ...existing, ...record, firstSeenAt: existing.firstSeenAt, lastSeenAt: seenAt };
+    const merged = mergeHaltData(existing, record, seenAt);
     if (JSON.stringify(existing) !== JSON.stringify(merged)) {
       store.halts[record.id] = merged;
       changed = true;

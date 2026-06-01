@@ -32,6 +32,65 @@ const DEFAULT_CLIENT_SETTINGS: Settings = {
   predictionWindowsMin: [5, 10, 20]
 };
 
+const HALT_CODE_GROUPS = [
+  {
+    label: 'News and regulatory halts',
+    codes: [
+      ['T1', 'News pending'],
+      ['T2', 'News released'],
+      ['T3', 'News fully disseminated; quote/trade resume times set'],
+      ['T6', 'Extraordinary market activity'],
+      ['T8', 'ETF halt'],
+      ['T12', 'Additional information requested by NASDAQ'],
+      ['H4', 'Non-compliance'],
+      ['H9', 'Required filings not current'],
+      ['H10', 'SEC trading suspension'],
+      ['H11', 'Regulatory concern'],
+      ['O1', 'Operations halt; contact Market Operations']
+    ]
+  },
+  {
+    label: 'Volatility and market-wide pauses',
+    codes: [
+      ['LUDP', 'Volatility trading pause'],
+      ['LUDS', 'Volatility pause - straddle condition'],
+      ['T5', 'Single-stock trading pause'],
+      ['T7', 'Quotation-only period after single-stock pause'],
+      ['M', 'Volatility trading pause for exchange-listed issue'],
+      ['MWC0', 'Market-wide circuit breaker carryover'],
+      ['MWC1', 'Market-wide circuit breaker Level 1'],
+      ['MWC2', 'Market-wide circuit breaker Level 2'],
+      ['MWC3', 'Market-wide circuit breaker Level 3'],
+      ['MWCQ', 'Market-wide circuit breaker resumption']
+    ]
+  },
+  {
+    label: 'Resume and availability codes',
+    codes: [
+      ['R1', 'New issue available'],
+      ['R2', 'Issue available'],
+      ['R4', 'Qualifications issues resolved; resume'],
+      ['R9', 'Filing requirements satisfied; resume'],
+      ['C3', 'Issuer news not forthcoming; resume'],
+      ['C4', 'Qualifications halt ended; resume'],
+      ['C9', 'Qualifications filings met; resume'],
+      ['C11', 'Regulatory halt concluded; resume']
+    ]
+  },
+  {
+    label: 'IPO, maintenance, and other',
+    codes: [
+      ['IPO1', 'IPO issue not yet trading'],
+      ['IPOQ', 'IPO released for quotation'],
+      ['IPOE', 'IPO positioning window extension'],
+      ['M1', 'Corporate action'],
+      ['M2', 'Quotation not available'],
+      ['D', 'Security deletion from NASDAQ/CQS'],
+      ['Blank', 'Reason not available']
+    ]
+  }
+] as const;
+
 type StoredFilters = {
   query: string;
   volOnly: boolean;
@@ -411,6 +470,34 @@ function ReasonBadge({ record }: { record: HaltRecord }) {
   );
 }
 
+function HaltCodeKey() {
+  return (
+    <details className="panel code-key" open>
+      <summary>
+        <span>
+          <span className="eyebrow">Halt Code Key</span>
+          <strong>NASDAQ reason-code meanings</strong>
+        </span>
+      </summary>
+      <div className="code-key-grid">
+        {HALT_CODE_GROUPS.map((group) => (
+          <section className="code-key-group" key={group.label}>
+            <h3>{group.label}</h3>
+            <dl>
+              {group.codes.map(([code, description]) => (
+                <div className="code-key-item" key={code}>
+                  <dt>{code}</dt>
+                  <dd>{description}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 function TimeCell({ iso, raw }: { iso: string | null; raw?: string }) {
   return (
     <div className="time-cell">
@@ -500,6 +587,7 @@ function App() {
         </section>
 
         <HaltTable records={records} state={appState} setWatchedSymbols={setWatchedSymbols} now={now} />
+        <HaltCodeKey />
       </main>
 
       <div className={`settings-shell ${mobileSettingsOpen ? 'mobile-open' : ''}`}>
