@@ -473,7 +473,7 @@ function HaltRow({ record, state, now, onToggle }: { record: HaltRecord; state: 
       <td><CountdownPill record={record} now={now} /></td>
       <td><span className={`status status-${record.status}`}>{statusLabel(record)}</span></td>
       <td>
-        <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label={record.watched ? 'Disable Alert' : 'Alert and Watch'} />
+        <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label="Alert and Watch" />
       </td>
     </tr>
   );
@@ -499,7 +499,7 @@ function HaltCard({ record, state, now, onToggle }: { record: HaltRecord; state:
         <Detail label="Quote Resume" value={record.quoteResumeAt ? `${formatIso(record.quoteResumeAt)} ET` : '-'} />
         <Detail label="Trade Resume" value={record.tradeResumeAt ? `${formatIso(record.tradeResumeAt)} ET` : 'pending'} />
       </div>
-      <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label={record.watched ? 'Disable Alert' : 'Alert and Watch'} />
+      <Toggle checked={state.settings.alertAllVolatility && record.isVolatility ? true : record.watched} disabled={state.settings.alertAllVolatility && record.isVolatility} onChange={(checked) => onToggle(record, checked)} label="Alert and Watch" />
     </article>
   );
 }
@@ -614,12 +614,17 @@ function App() {
         .map((record) => record.id)
     );
 
-    return current.filter((record) => {
+    const filtered = current.filter((record) => {
       if (activeOnly && record.status === 'ended' && !watchedFallbackIds.has(record.id)) return false;
       if (activeOnly && !isActiveHalt(record) && !watchedFallbackIds.has(record.id)) return false;
       if (!q) return true;
       return record.symbol.includes(q) || record.issueName.toUpperCase().includes(q) || record.reasonCode.includes(q);
     });
+
+    return [
+      ...filtered.filter((record) => record.watched),
+      ...filtered.filter((record) => !record.watched)
+    ];
   }, [appState, query, volOnly, activeOnly, now]);
 
   if (!appState) {
